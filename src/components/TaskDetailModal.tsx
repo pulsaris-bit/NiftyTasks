@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
+  Plus, 
   Calendar, 
   Flag, 
   Tag, 
@@ -11,7 +12,7 @@ import {
   MessageSquare,
   Clock
 } from 'lucide-react';
-import { Task, TaskPriority } from '../types';
+import { Task, TaskPriority, Project } from '../types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,8 @@ interface TaskDetailModalProps {
   onClose: () => void;
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onDelete: (id: string) => void;
+  projects: Project[];
+  addProject: (name: string, color?: string) => void;
 }
 
 export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
@@ -28,11 +31,16 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   isOpen,
   onClose,
   onUpdate,
-  onDelete
+  onDelete,
+  projects,
+  addProject
 }) => {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
   const [priority, setPriority] = useState<TaskPriority>(task.priority);
+  const [category, setCategory] = useState(task.category || 'Algemeen');
+  const [isAddingNewProject, setIsAddingNewProject] = useState(false);
+  const [newProjectValue, setNewProjectValue] = useState('');
   const [dueDate, setDueDate] = useState<string>(
     task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''
   );
@@ -41,6 +49,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     setTitle(task.title);
     setDescription(task.description || '');
     setPriority(task.priority);
+    setCategory(task.category || 'Algemeen');
     setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
   }, [task]);
 
@@ -49,8 +58,19 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       title,
       description,
       priority,
+      category,
       dueDate: dueDate ? new Date(dueDate) : undefined
     });
+  };
+
+  const handleAddProject = () => {
+    if (newProjectValue.trim()) {
+      addProject(newProjectValue.trim());
+      setCategory(newProjectValue.trim());
+      onUpdate(task.id, { category: newProjectValue.trim() });
+      setNewProjectValue('');
+      setIsAddingNewProject(false);
+    }
   };
 
   const toggleStatus = () => {
@@ -129,6 +149,67 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 />
               </div>
 
+              {/* Metadata / Category */}
+              <div className="space-y-3 pt-2">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 ml-1">
+                  <Tag className="w-3 h-3" /> Project / Label
+                </div>
+                
+                <div className="flex gap-2">
+                  {!isAddingNewProject ? (
+                    <>
+                      <select
+                        value={category}
+                        onChange={(e) => {
+                          if (e.target.value === 'ADD_NEW') {
+                            setIsAddingNewProject(true);
+                          } else {
+                            setCategory(e.target.value);
+                            onUpdate(task.id, { category: e.target.value });
+                          }
+                        }}
+                        className="flex-1 rounded-xl border-slate-100 text-sm font-medium focus:ring-primary focus:border-primary py-2.5 px-3 bg-slate-50 text-slate-700 transition-all appearance-none cursor-pointer"
+                      >
+                        {projects.map(p => (
+                          <option key={p.name} value={p.name}>{p.name}</option>
+                        ))}
+                        <option value="Algemeen">Algemeen</option>
+                        <option value="ADD_NEW" className="font-bold text-primary">+ Nieuw label...</option>
+                      </select>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setIsAddingNewProject(true)}
+                        className="h-10 w-10 p-0 rounded-xl bg-slate-50 text-slate-400 hover:text-primary hover:bg-primary/5"
+                      >
+                        <Plus className="w-5 h-5" />
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
+                      <input
+                        autoFocus
+                        type="text"
+                        value={newProjectValue}
+                        onChange={(e) => setNewProjectValue(e.target.value)}
+                        placeholder="Nieuw labelnaam..."
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleAddProject();
+                          if (e.key === 'Escape') setIsAddingNewProject(false);
+                        }}
+                        className="flex-1 rounded-xl border-slate-100 text-sm font-medium focus:ring-primary focus:border-primary py-2 px-3 bg-slate-50 text-slate-700"
+                      />
+                      <Button size="sm" onClick={handleAddProject} className="rounded-xl px-4">
+                        Voeg toe
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setIsAddingNewProject(false)} className="rounded-xl w-10 p-0">
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Grid Props */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -190,11 +271,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" /> Gemaakt: {new Date(task.createdAt).toLocaleDateString()}
                   </span>
-                  {task.category && (
-                    <span className="flex items-center gap-1">
-                      <Tag className="w-3 h-3" /> {task.category}
-                    </span>
-                  )}
                 </div>
               </div>
             </div>

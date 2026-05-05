@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Task, TaskPriority } from '../types';
+import { Task, TaskPriority, Project } from '../types';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -36,6 +36,7 @@ interface TaskItemProps {
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onDelete: (id: string) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
+  projects?: Project[];
 }
 
 const priorityColors = {
@@ -44,9 +45,11 @@ const priorityColors = {
   high: "bg-red-50 text-red-700 border-red-100",
 };
 
-export const TaskItem = React.memo<TaskItemProps & { onClick?: () => void }>(({ task, onToggle, onUpdate, onDelete, onAddSubtask, onClick }) => {
+export const TaskItem = React.memo<TaskItemProps & { onClick?: () => void }>(({ task, onToggle, onUpdate, onDelete, onAddSubtask, onClick, projects }) => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isReminderPickerOpen, setIsReminderPickerOpen] = useState(false);
+  
+  const projectColor = projects?.find(p => p.name === task.category)?.color;
   const [selectedDate, setSelectedDate] = useState(
     task.dueDate ? task.dueDate.toISOString().split('T')[0] : ''
   );
@@ -97,17 +100,18 @@ export const TaskItem = React.memo<TaskItemProps & { onClick?: () => void }>(({ 
       )}
     >
       <div className="flex items-center gap-4 p-4">
-        <Checkbox
-          checked={task.completed}
-          onCheckedChange={(checked) => {
-            onToggle(task.id);
-          }}
-          onClick={(e) => e.stopPropagation()}
-          className={cn(
-            "w-5 h-5 rounded-md border-2 border-slate-300 transition-colors",
-            task.completed && "bg-primary border-primary"
-          )}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={task.completed}
+            onCheckedChange={(checked) => {
+              onToggle(task.id);
+            }}
+            className={cn(
+              "w-5 h-5 rounded-md border-2 border-slate-300 transition-colors",
+              task.completed && "bg-primary border-primary"
+            )}
+          />
+        </div>
         
         <div className="flex-1 min-w-0 space-y-0.5">
           <h3 className={cn(
@@ -118,6 +122,12 @@ export const TaskItem = React.memo<TaskItemProps & { onClick?: () => void }>(({ 
           </h3>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider truncate flex items-center gap-1.5">
+              {projectColor && (
+                <div 
+                  className="w-2 h-2 rounded-full shrink-0" 
+                  style={{ backgroundColor: projectColor }} 
+                />
+              )}
               {task.category}
               {task.dueDate && ` • ${task.dueDate.toLocaleDateString('nl-NL')}`}
               {task.reminderDate && (
@@ -151,16 +161,10 @@ export const TaskItem = React.memo<TaskItemProps & { onClick?: () => void }>(({ 
           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
               <DropdownMenuTrigger 
-                render={
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-slate-400 hover:text-slate-600 opacity-40 group-hover:opacity-100 transition-opacity"
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                }
-              />
+                className="h-8 w-8 text-slate-400 hover:text-slate-600 opacity-100 sm:opacity-40 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-md hover:bg-slate-100 outline-none select-none"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prioriteit</div>
                 <DropdownMenuItem onClick={() => onUpdate(task.id, { priority: 'high' })} className="text-red-600">

@@ -1,3 +1,8 @@
+export interface Project {
+  name: string;
+  color: string;
+}
+
 export type TaskPriority = 'low' | 'medium' | 'high';
 
 export interface Task {

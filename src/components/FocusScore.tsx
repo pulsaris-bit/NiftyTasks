@@ -14,10 +14,21 @@ export const FocusScore = ({ tasks, className }: FocusScoreProps) => {
     low: 1
   };
 
-  const totalPoints = tasks.reduce((sum, task) => sum + (priorityWeights[task.priority] || 1), 0);
-  const completedPoints = tasks.filter(t => t.completed).reduce((sum, task) => sum + (priorityWeights[task.priority] || 1), 0);
+  const today = new Date().toDateString();
   
-  const completionRate = totalPoints > 0 ? Math.round((completedPoints / totalPoints) * 100) : 0;
+  // A task is "relevant" for today's focus score if:
+  // 1. It is not completed (outstanding work)
+  // 2. It was completed TODAY (progress made today)
+  const relevantTasks = tasks.filter(t => {
+    if (!t.completed) return true;
+    if (t.completedAt && new Date(t.completedAt).toDateString() === today) return true;
+    return false;
+  });
+
+  const totalPoints = relevantTasks.length > 0 ? relevantTasks.reduce((sum, task) => sum + (priorityWeights[task.priority] || 1), 0) : 0;
+  const completedPoints = relevantTasks.filter(t => t.completed).reduce((sum, task) => sum + (priorityWeights[task.priority] || 1), 0);
+  
+  const completionRate = totalPoints > 0 ? Math.round((completedPoints / totalPoints) * 100) : 100;
   
   // Simulated productivity diff based on completion rate
   const productivityDiff = completionRate > 50 ? 12 : -5;
@@ -31,8 +42,8 @@ export const FocusScore = ({ tasks, className }: FocusScoreProps) => {
 
   return (
     <div className={cn("bg-slate-50 border border-slate-100 rounded-2xl p-3 lg:p-5", className)}>
-      <div className="hidden lg:flex items-baseline justify-between lg:block">
-        <div className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-0 lg:mb-1">Focus Score</div>
+      <div className="hidden lg:flex items-baseline justify-between mb-4">
+        <div className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em]">Focus Score</div>
         <div className="text-xl lg:text-3xl font-bold text-slate-900">{completionRate}%</div>
       </div>
       

@@ -12,11 +12,12 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Settings, Plus, FolderPlus, Palette, Bell, Shield, X, Edit2, Trash2, CheckCircle2, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Project } from '../types';
 
 interface SettingsDialogProps {
-  projects: string[];
-  addProject: (name: string) => void;
-  updateProject: (oldName: string, newName: string) => void;
+  projects: Project[];
+  addProject: (name: string, color?: string) => void;
+  updateProject: (oldName: string, newName: string, color?: string) => void;
   removeProject: (name: string) => void;
   currentTheme: string;
   setTheme: (theme: string) => void;
@@ -25,6 +26,17 @@ interface SettingsDialogProps {
   onLogout: () => void;
   trigger?: React.ReactNode;
 }
+
+const PRESET_COLORS = [
+  '#C36322', // Orange
+  '#2563eb', // Blue
+  '#059669', // Emerald
+  '#7c3aed', // Violet
+  '#db2777', // Pink
+  '#dc2626', // Red
+  '#ca8a04', // Yellow
+  '#0891b2', // Cyan
+];
 
 export function SettingsDialog({ 
   projects, 
@@ -39,25 +51,29 @@ export function SettingsDialog({
   trigger 
 }: SettingsDialogProps) {
   const [newProjectName, setNewProjectName] = useState('');
-  const [activeTab, setActiveTab] = useState<'general' | 'projects' | 'notifications' | 'privacy'>('general');
-  const [editingProject, setEditingProject] = useState<string | null>(null);
+  const [newProjectColor, setNewProjectColor] = useState(PRESET_COLORS[0]);
+  const [activeTab, setActiveTab] = useState<'general' | 'projects' | 'notifications'>('general');
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [editColor, setEditColor] = useState('');
 
   const handleAddProject = () => {
     if (newProjectName.trim()) {
-      addProject(newProjectName.trim());
+      addProject(newProjectName.trim(), newProjectColor);
       setNewProjectName('');
+      setNewProjectColor(PRESET_COLORS[0]);
     }
   };
 
-  const startEditing = (name: string) => {
-    setEditingProject(name);
-    setEditValue(name);
+  const startEditing = (project: Project) => {
+    setEditingProject(project);
+    setEditValue(project.name);
+    setEditColor(project.color);
   };
 
   const handleUpdate = () => {
-    if (editingProject && editValue.trim() && editValue !== editingProject) {
-      updateProject(editingProject, editValue.trim());
+    if (editingProject && editValue.trim()) {
+      updateProject(editingProject.name, editValue.trim(), editColor);
     }
     setEditingProject(null);
   };
@@ -73,16 +89,16 @@ export function SettingsDialog({
           )
         }
       />
-      <DialogContent showCloseButton={false} className="w-[95vw] max-w-[500px] sm:w-full p-0 border-none bg-[#0f172a] text-white overflow-hidden rounded-[32px] sm:rounded-3xl shadow-2xl ring-1 ring-white/10 max-h-[90vh] sm:max-h-none">
-        <div className="flex flex-col sm:flex-row h-full min-h-[500px] sm:h-[500px]">
+      <DialogContent showCloseButton={false} className="w-[95vw] sm:w-[96vw] sm:max-w-[1000px] p-0 border-none bg-[#0f172a] text-white overflow-hidden rounded-[24px] sm:rounded-3xl shadow-2xl ring-1 ring-white/10 max-h-[90vh] sm:max-h-[85vh]">
+        <div className="flex flex-col sm:flex-row h-full sm:h-[700px] overflow-hidden">
           {/* Sidebar Tabs */}
-          <div className="w-full sm:w-40 border-b sm:border-b-0 sm:border-r border-white/5 bg-black/20 p-3 sm:p-4 flex flex-col shrink-0">
-            <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2 mb-3 sm:mb-4 shrink-0">Instellingen</h2>
-            <div className="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 no-scrollbar flex-1">
+          <div className="w-full sm:w-64 border-b sm:border-b-0 sm:border-r border-white/5 bg-black/20 p-4 sm:p-8 flex flex-col shrink-0">
+            <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2 mb-4 sm:mb-8 shrink-0">Instellingen</h2>
+            <div className="flex flex-col gap-1 sm:gap-2 flex-1 items-stretch">
               <button 
                 onClick={() => setActiveTab('general')}
                 className={cn(
-                  "flex-shrink-0 sm:w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap",
+                  "w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all",
                   activeTab === 'general' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-white hover:bg-white/5"
                 )}
               >
@@ -92,7 +108,7 @@ export function SettingsDialog({
               <button 
                 onClick={() => setActiveTab('projects')}
                 className={cn(
-                  "flex-shrink-0 sm:w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap",
+                  "w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all",
                   activeTab === 'projects' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-white hover:bg-white/5"
                 )}
               >
@@ -102,53 +118,41 @@ export function SettingsDialog({
               <button 
                 onClick={() => setActiveTab('notifications')}
                 className={cn(
-                  "flex-shrink-0 sm:w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap",
+                  "w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all",
                   activeTab === 'notifications' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-white hover:bg-white/5"
                 )}
               >
                 <Bell className="w-3.5 h-3.5" />
                 Meldingen
               </button>
-              <button 
-                onClick={() => setActiveTab('privacy')}
-                className={cn(
-                  "flex-shrink-0 sm:w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap",
-                  activeTab === 'privacy' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-white hover:bg-white/5"
-                )}
-              >
-                <Shield className="w-3.5 h-3.5" />
-                Privacy
-              </button>
 
-              <div className="sm:hidden w-px h-6 bg-white/5 mx-1 self-center" />
+              <div className="hidden sm:block w-px sm:w-full h-px sm:h-px bg-white/5 my-2" />
               
               <button 
                 onClick={onLogout}
-                className="sm:mt-4 flex-shrink-0 sm:w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all shrink-0 whitespace-nowrap"
+                className="sm:mt-2 w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all shrink-0"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                {/* On mobile maybe hide text or just keep it */}
                 Log uit
               </button>
             </div>
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 p-5 sm:p-8 flex flex-col min-w-0 overflow-y-auto">
-            <DialogHeader className="mb-4 sm:mb-6 shrink-0">
-              <DialogTitle className="text-lg sm:text-xl font-bold tracking-tight text-white mb-1">
+          <div className="flex-1 p-4 sm:p-10 flex flex-col min-w-0 overflow-y-auto">
+            <DialogHeader className="mb-4 sm:mb-10 shrink-0">
+              <DialogTitle className="text-lg sm:text-2xl font-bold tracking-tight text-white mb-1 sm:mb-2">
                 {activeTab === 'general' ? 'Algemene Instellingen' : 
                  activeTab === 'projects' ? 'Project Management' :
-                 activeTab === 'notifications' ? 'Meldingen & Desktop' :
-                 'Privacy & Veiligheid'}
+                 'Meldingen & Desktop'}
               </DialogTitle>
               <p className="text-[10px] sm:text-xs text-slate-400">
                 {activeTab === 'general' ? 'Pas de interface van NiftyTasks aan naar jouw wensen.' : 
                  activeTab === 'projects' ? 'Beheer je projecten en categorieën hier.' :
-                 activeTab === 'notifications' ? 'Blijf op de hoogte van je taken met desktop meldingen.' :
-                 'Beheer hoe we met je gegevens omgaan.'}
+                 'Blijf op de hoogte van je taken met desktop meldingen.'}
               </p>
             </DialogHeader>
+
 
             <div className="flex-1 flex flex-col">
               {activeTab === 'general' && (
@@ -189,23 +193,38 @@ export function SettingsDialog({
 
               {activeTab === 'projects' && (
                 <div className="space-y-6 flex-1 flex flex-col min-h-0">
-                  <div className="space-y-3 shrink-0">
+                  <div className="space-y-4 shrink-0">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Nieuw Project</label>
-                    <div className="flex gap-2">
-                      <Input 
-                        placeholder="Projectnaam..." 
-                        className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-10 rounded-xl focus-visible:ring-primary focus-visible:ring-offset-0"
-                        value={newProjectName}
-                        onChange={(e) => setNewProjectName(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddProject()}
-                      />
-                      <Button 
-                        onClick={handleAddProject}
-                        disabled={!newProjectName.trim()}
-                        className="bg-primary hover:bg-primary-dark text-white rounded-xl h-10 w-10 flex-shrink-0"
-                      >
-                        <Plus className="w-5 h-5" />
-                      </Button>
+                    <div className="flex flex-col gap-3">
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="Projectnaam..." 
+                          className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 sm:h-10 rounded-xl focus-visible:ring-primary focus-visible:ring-offset-0"
+                          value={newProjectName}
+                          onChange={(e) => setNewProjectName(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddProject()}
+                        />
+                        <Button 
+                          onClick={handleAddProject}
+                          disabled={!newProjectName.trim()}
+                          className="bg-primary hover:bg-primary-dark text-white rounded-xl h-11 w-11 sm:h-10 sm:w-10 flex-shrink-0"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 px-1">
+                        {PRESET_COLORS.map(color => (
+                          <button
+                            key={color}
+                            onClick={() => setNewProjectColor(color)}
+                            className={cn(
+                              "w-6 h-6 rounded-full border-2 transition-all",
+                              newProjectColor === color ? "border-white scale-110 shadow-lg shadow-white/20" : "border-transparent opacity-50 hover:opacity-100"
+                            )}
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -214,26 +233,48 @@ export function SettingsDialog({
                     <ScrollArea className="flex-1 pr-2">
                       <div className="space-y-2 pb-4">
                         {projects.map((project) => (
-                          <div key={project} className="group/item flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-all">
-                            {editingProject === project ? (
-                              <div className="flex-1 flex items-center gap-2">
-                                <Input 
-                                  autoFocus
-                                  className="h-8 bg-black/20 border-white/10 text-xs rounded-lg px-2 focus-visible:ring-primary focus-visible:ring-offset-0"
-                                  value={editValue}
-                                  onChange={(e) => setEditValue(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleUpdate();
-                                    if (e.key === 'Escape') setEditingProject(null);
-                                  }}
-                                />
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-500" onClick={handleUpdate}>
-                                  <CheckCircle2 className="w-4 h-4" />
-                                </Button>
+                          <div key={project.name} className="group/item flex flex-col gap-2 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-all">
+                            {editingProject?.name === project.name ? (
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                  <Input 
+                                    autoFocus
+                                    className="h-9 bg-black/20 border-white/10 text-sm rounded-lg px-2 focus-visible:ring-primary focus-visible:ring-offset-0"
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleUpdate();
+                                      if (e.key === 'Escape') setEditingProject(null);
+                                    }}
+                                  />
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-500" onClick={handleUpdate}>
+                                    <CheckCircle2 className="w-4 h-4" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400" onClick={() => setEditingProject(null)}>
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                                <div className="flex flex-wrap gap-2 px-1">
+                                  {PRESET_COLORS.map(color => (
+                                    <button
+                                      key={color}
+                                      onClick={() => setEditColor(color)}
+                                      className={cn(
+                                        "w-5 h-5 rounded-full border-2 transition-all",
+                                        editColor === color ? "border-white scale-110 shadow-lg" : "border-transparent opacity-50 hover:opacity-100"
+                                      )}
+                                      style={{ backgroundColor: color }}
+                                    />
+                                  ))}
+                                </div>
                               </div>
                             ) : (
-                              <>
-                                <span className="flex-1 text-xs font-medium truncate">{project}</span>
+                              <div className="flex items-center gap-3">
+                                <div 
+                                  className="w-3 h-3 rounded-full shrink-0" 
+                                  style={{ backgroundColor: project.color }} 
+                                />
+                                <span className="flex-1 text-xs font-semibold truncate text-slate-200">{project.name}</span>
                                 <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/item:opacity-100 transition-opacity flex-shrink-0">
                                   <Button 
                                     size="icon" 
@@ -247,12 +288,12 @@ export function SettingsDialog({
                                     size="icon" 
                                     variant="ghost" 
                                     className="h-7 w-7 text-slate-400 hover:text-red-500"
-                                    onClick={() => removeProject(project)}
+                                    onClick={() => removeProject(project.name)}
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </Button>
                                 </div>
-                              </>
+                              </div>
                             )}
                           </div>
                         ))}
@@ -265,18 +306,18 @@ export function SettingsDialog({
               {activeTab === 'notifications' && (
                 <div className="space-y-6">
                   <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 gap-4">
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-bold text-white">Browser Meldingen</h4>
-                        <p className="text-[10px] text-slate-400">Ontvang een notificatie wanneer een taak nadert of voltooid wordt.</p>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-5 bg-white/5 rounded-2xl border border-white/5 gap-4">
+                        <div className="space-y-1.5 flex-1 pr-0 sm:pr-4">
+                          <h4 className="text-sm font-bold text-white leading-tight">Browser Meldingen</h4>
+                          <p className="text-[10px] text-slate-400 leading-relaxed">Ontvang een notificatie wanneer een taak nadert of voltooid wordt.</p>
+                        </div>
+                        <div className={cn(
+                          "px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0",
+                          notificationsEnabled ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
+                        )}>
+                          {notificationsEnabled ? 'Ingeschakeld' : 'Uitgeschakeld'}
+                        </div>
                       </div>
-                      <div className={cn(
-                        "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0",
-                        notificationsEnabled ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
-                      )}>
-                        {notificationsEnabled ? 'Ingeschakeld' : 'Uitgeschakeld'}
-                      </div>
-                    </div>
 
                     {!notificationsEnabled && (
                       <div className="space-y-4">
@@ -318,23 +359,9 @@ export function SettingsDialog({
                   </div>
                 </div>
               )}
-
-              {activeTab === 'privacy' && (
-                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 p-8">
-                  <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
-                    <Shield className="w-8 h-8 text-slate-600" />
-                  </div>
-                  <div className="space-y-2 max-w-[240px]">
-                    <h4 className="text-sm font-bold text-white">Privacy bij NiftyTasks</h4>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Al je taken, projecten en instellingen worden uitsluitend lokaal in je browser opgeslagen. We verzamelen geen persoonsgegevens.
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
 
-            <div className="mt-auto flex justify-end pt-4 border-t border-white/5 shrink-0">
+            <div className="mt-auto flex justify-end pt-3 border-t border-white/5 shrink-0">
               <DialogClose
                 render={
                   <Button

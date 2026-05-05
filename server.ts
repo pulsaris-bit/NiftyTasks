@@ -19,6 +19,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS projects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE,
+    color TEXT DEFAULT '#C36322',
     user_email TEXT,
     FOREIGN KEY(user_email) REFERENCES users(email)
   );
@@ -33,6 +34,7 @@ db.exec(`
     createdAt TEXT,
     dueDate TEXT,
     reminderDate TEXT,
+    completedAt TEXT,
     user_email TEXT,
     FOREIGN KEY(user_email) REFERENCES users(email)
   );
@@ -44,6 +46,13 @@ db.exec(`
     FOREIGN KEY(user_email) REFERENCES users(email)
   );
 `);
+
+// Add color column if it doesn't exist (migration)
+try {
+  db.prepare("ALTER TABLE projects ADD COLUMN color TEXT DEFAULT '#C36322'").run();
+} catch (e) {
+  // Column already exists
+}
 
 async function startServer() {
   const app = express();
@@ -66,9 +75,13 @@ async function startServer() {
       user = { email, name: email.split('@')[0] };
       
       // Default projects
-      const defaultProjects = ['Persoonlijk', 'Werk', 'Gezondheid'];
+      const defaultProjects = [
+        { name: 'Persoonlijk', color: '#2563eb' },
+        { name: 'Werk', color: '#C36322' },
+        { name: 'Gezondheid', color: '#059669' }
+      ];
       for (const p of defaultProjects) {
-        db.prepare('INSERT OR IGNORE INTO projects (name, user_email) VALUES (?, ?)').run(p, email);
+        db.prepare('INSERT OR IGNORE INTO projects (name, color, user_email) VALUES (?, ?, ?)').run(p.name, p.color, email);
       }
 
       // Default setting
@@ -94,8 +107,8 @@ async function startServer() {
   app.post('/api/tasks', (req, res) => {
     const { task, email } = req.body;
     db.prepare(`
-      INSERT INTO tasks (id, title, description, completed, priority, category, createdAt, dueDate, reminderDate, user_email)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO tasks (id, title, description, completed, priority, category, createdAt, dueDate, reminderDate, completedAt, user_email)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       task.id, 
       task.title, 
@@ -106,6 +119,7 @@ async function startServer() {
       new Date(task.createdAt).toISOString(),
       task.dueDate ? new Date(task.dueDate).toISOString() : null,
       task.reminderDate ? new Date(task.reminderDate).toISOString() : null,
+      task.completedAt ? new Date(task.completedAt).toISOString() : null,
       email
     );
     res.sendStatus(201);
@@ -116,7 +130,7 @@ async function startServer() {
     const { task } = req.body;
     db.prepare(`
       UPDATE tasks 
-      SET title = ?, description = ?, completed = ?, priority = ?, category = ?, dueDate = ?, reminderDate = ?
+      SET title = ?, description = ?, completed = ?, priority = ?, category = ?, dueDate = ?, reminderDate = ?, completedAt = ?
       WHERE id = ?
     `).run(
       task.title,
@@ -126,6 +140,7 @@ async function startServer() {
       task.category,
       task.dueDate ? new Date(task.dueDate).toISOString() : null,
       task.reminderDate ? new Date(task.reminderDate).toISOString() : null,
+      task.completedAt ? new Date(task.completedAt).toISOString() : null,
       id
     );
     res.sendStatus(200);
@@ -140,14 +155,28 @@ async function startServer() {
   // Projects
   app.get('/api/projects', (req, res) => {
     const email = req.query.email as string;
-    const projects = db.prepare('SELECT name FROM projects WHERE user_email = ?').all(email);
-    res.json(projects.map((p: any) => p.name));
+    const projects = db.prepare('SELECT name, color FROM projects WHERE user_email = ?').all(email);
+    res.json(projects);
   });
 
   app.post('/api/projects', (req, res) => {
-    const { name, email } = req.body;
-    db.prepare('INSERT OR IGNORE INTO projects (name, user_email) VALUES (?, ?)').run(name, email);
+    const { name, color, email } = req.body;
+    db.prepare('INSERT OR IGNORE INTO projects (name, color, user_email) VALUES (?, ?, ?)').run(name, color || '#C36322', email);
     res.sendStatus(201);
+  });
+
+  app.put('/api/projects/:oldName', (req, res) => {
+    const { oldName } = req.params;
+    const { name, color, email } = req.body;
+    db.prepare('UPDATE projects SET name = ?, color = ? WHERE name = ? AND user_email = ?').run(name, color, oldName, email);
+    res.sendStatus(200);
+  });
+
+  app.delete('/api/projects/:name', (req, res) => {
+    const { name } = req.params;
+    const { email } = req.query;
+    db.prepare('DELETE FROM projects WHERE name = ? AND user_email = ?').run(name, email);
+    res.sendStatus(200);
   });
 
   // Settings

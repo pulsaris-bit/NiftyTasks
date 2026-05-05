@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, Search, Filter, Menu, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Plus, Search, Filter, Menu, PanelRightClose, PanelRightOpen, Tag } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { TaskItem } from './components/TaskItem';
 import { AuthScreen } from './components/AuthScreen';
@@ -14,7 +14,7 @@ import { TaskDetailModal } from './components/TaskDetailModal';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Task } from './types';
+import { Task, Project } from './types';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import {
@@ -32,9 +32,18 @@ export default function App() {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('nifty_sidebar_collapsed');
+    return saved === 'true';
+  });
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isMobileAddOpen, setIsMobileAddOpen] = useState(false);
-  const [projects, setProjects] = useState<string[]>(['Persoonlijk', 'Werk', 'Gezondheid']);
+  const [projects, setProjects] = useState<Project[]>([
+    { name: 'Persoonlijk', color: '#2563eb' },
+    { name: 'Werk', color: '#C36322' },
+    { name: 'Gezondheid', color: '#059669' }
+  ]);
+  const [newTaskProject, setNewTaskProject] = useState<string>('Algemeen');
   const [currentTheme, setCurrentTheme] = useState('orange');
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -160,6 +169,10 @@ export default function App() {
     }
   }, []);
 
+  const sortedProjects = useMemo(() => {
+    return [...projects].sort((a, b) => a.name.localeCompare(b.name));
+  }, [projects]);
+
   const categories = useMemo(() => {
     const catsMap = tasks.reduce((acc, task) => {
       acc[task.category] = (acc[task.category] || 0) + (task.completed ? 0 : 1);
@@ -167,19 +180,23 @@ export default function App() {
     }, {} as Record<string, number>);
 
     // Ensure all defined projects are present
-    projects.forEach(projectName => {
-      if (!(projectName in catsMap)) {
-        catsMap[projectName] = 0;
+    projects.forEach(project => {
+      if (!(project.name in catsMap)) {
+        catsMap[project.name] = 0;
       }
     });
 
     return Object.entries(catsMap)
-      .map(([name, count]) => ({
-        id: name,
-        name,
-        icon: null,
-        count
-      }))
+      .map(([name, count]) => {
+        const project = projects.find(p => p.name === name);
+        return {
+          id: name,
+          name,
+          color: project?.color || '#94a3b8',
+          icon: null,
+          count
+        };
+      })
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [tasks, projects]);
 
@@ -262,14 +279,16 @@ export default function App() {
 
     setIsAddingTask(true);
     try {
+      const taskId = typeof crypto.randomUUID === 'function' 
+        ? crypto.randomUUID() 
+        : Math.random().toString(36).substring(2) + Date.now().toString(36);
+
       const newTask: Task = {
-        id: crypto.randomUUID(),
+        id: taskId,
         title: newTaskInput.trim(), // Sanitize: trim whitespace
         completed: false,
-        priority: activeCategory === 'important' ? 'high' : 'medium',
-        category: activeCategory === 'all' || activeCategory === 'today' || activeCategory === 'important' || activeCategory === 'completed' 
-          ? 'Algemeen' 
-          : activeCategory,
+        priority: 'low',
+        category: newTaskProject,
         createdAt: new Date(),
         dueDate: undefined,
       };
@@ -282,12 +301,13 @@ export default function App() {
 
       setTasks(prev => [newTask, ...prev]);
       setNewTaskInput('');
+      // We keep the current newTaskProject so adding multiple tasks to the same label is easier
     } catch (error) {
       console.error("Fout bij toevoegen taak:", error);
     } finally {
       setIsAddingTask(false);
     }
-  }, [newTaskInput, isAddingTask, activeCategory, user]);
+  }, [newTaskInput, isAddingTask, activeCategory, user, newTaskProject]);
 
   const toggleTask = React.useCallback(async (id: string) => {
     const task = tasks.find(t => t.id === id);
@@ -370,47 +390,70 @@ export default function App() {
     }
   }, [tasks, user]);
 
-  const addProject = React.useCallback(async (name: string) => {
+  const addProject = React.useCallback(async (name: string, color?: string) => {
     if (name.trim()) {
       const trimmedName = name.trim();
-      if (projects.includes(trimmedName)) return;
+      const projectColor = color || '#C36322';
+      if (projects.some(p => p.name === trimmedName)) return;
 
       try {
         await fetch('/api/projects', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: trimmedName, email: user })
+          body: JSON.stringify({ name: trimmedName, color: projectColor, email: user })
         });
-        setProjects(prev => [...prev, trimmedName]);
+        setProjects(prev => [...prev, { name: trimmedName, color: projectColor }]);
       } catch (err) {
         console.error("Failed to add project:", err);
       }
     }
   }, [projects, user]);
 
-  const updateProject = React.useCallback((oldName: string, newName: string) => {
+  const updateProject = React.useCallback(async (oldName: string, newName: string, color?: string) => {
     const trimmedNewName = newName.trim();
     if (!trimmedNewName) return;
     
-    setProjects(prev => {
-      if (prev.includes(trimmedNewName)) return prev;
-      return prev.map(p => p === oldName ? trimmedNewName : p);
-    });
+    const projectColor = color || projects.find(p => p.name === oldName)?.color || '#C36322';
 
-    setTasks(prev => prev.map(t => t.category === oldName ? { ...t, category: trimmedNewName } : t));
-    
-    setActiveCategory(prev => prev === oldName ? trimmedNewName : prev);
-  }, []);
+    try {
+      await fetch(`/api/projects/${encodeURIComponent(oldName)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmedNewName, color: projectColor, email: user })
+      });
 
-  const removeProject = React.useCallback((name: string) => {
-    setProjects(prev => prev.filter(p => p !== name));
-    setTasks(prev => prev.map(t => t.category === name ? { ...t, category: 'Persoonlijk' } : t));
-    setActiveCategory(prev => prev === name ? 'today' : prev);
-  }, []);
+      setProjects(prev => {
+        return prev.map(p => p.name === oldName ? { name: trimmedNewName, color: projectColor } : p);
+      });
+
+      setTasks(prev => prev.map(t => t.category === oldName ? { ...t, category: trimmedNewName } : t));
+      
+      setActiveCategory(prev => prev === oldName ? trimmedNewName : prev);
+    } catch (err) {
+      console.error("Failed to update project:", err);
+    }
+  }, [projects, user]);
+
+  const removeProject = React.useCallback(async (name: string) => {
+    try {
+      await fetch(`/api/projects/${encodeURIComponent(name)}?email=${user}`, {
+        method: 'DELETE'
+      });
+      setProjects(prev => prev.filter(p => p.name !== name));
+      setTasks(prev => prev.map(t => t.category === name ? { ...t, category: 'Persoonlijk' } : t));
+      setActiveCategory(prev => prev === name ? 'today' : prev);
+    } catch (err) {
+      console.error("Failed to delete project:", err);
+    }
+  }, [user]);
 
   useEffect(() => {
     localStorage.setItem('nifty_right_panel', String(isRightPanelOpen));
   }, [isRightPanelOpen]);
+
+  useEffect(() => {
+    localStorage.setItem('nifty_sidebar_collapsed', String(isSidebarCollapsed));
+  }, [isSidebarCollapsed]);
 
   // Sync notifications state initially
   useEffect(() => {
@@ -508,15 +551,19 @@ export default function App() {
         activeCategory={activeCategory} 
         setActiveCategory={(cat) => {
           setActiveCategory(cat);
+          const specialViews = ['all', 'today', 'important', 'completed', 'planned'];
+          setNewTaskProject(specialViews.includes(cat) ? 'Algemeen' : cat);
           setSelectedDate(null);
         }} 
         categories={categories} 
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
         addProject={addProject}
         updateProject={updateProject}
         removeProject={removeProject}
-        projects={projects}
+        projects={sortedProjects}
         currentTheme={currentTheme}
         setTheme={setCurrentTheme}
         notificationsEnabled={notificationsEnabled}
@@ -549,20 +596,14 @@ export default function App() {
           <div className="flex items-center gap-2 lg:gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger 
-                render={
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className={cn(
-                      "rounded-xl transition-all h-9",
-                      priorityFilter !== 'all' ? "text-primary bg-secondary hover:bg-secondary/80" : "text-slate-500 hover:text-slate-900"
-                    )}
-                  >
-                    <Filter className="w-4 h-4 lg:mr-2" />
-                    <span className="hidden lg:inline">{priorityFilter === 'all' ? 'Filter' : `Filter: ${priorityFilter}`}</span>
-                  </Button>
-                }
-              />
+                className={cn(
+                  "rounded-xl transition-all h-9 px-3 flex items-center gap-1.5 lg:gap-2 text-sm font-medium outline-none select-none focus-visible:ring-2 focus-visible:ring-primary/20 border border-transparent",
+                  priorityFilter !== 'all' ? "text-primary bg-secondary hover:bg-secondary/80" : "text-slate-500 hover:text-slate-900 border-slate-200"
+                )}
+              >
+                <Filter className="w-4 h-4" />
+                <span className="hidden lg:inline">{priorityFilter === 'all' ? 'Filter' : `Filter: ${priorityFilter}`}</span>
+              </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 overflow-hidden">
                 <DropdownMenuItem 
                   onClick={() => setPriorityFilter('all')} 
@@ -629,7 +670,7 @@ export default function App() {
                 transition={{ duration: 0.2, ease: "easeInOut" }}
                 className="flex-1 flex flex-col"
               >
-                <div className="mb-8 lg:mb-12 flex flex-col lg:flex-row lg:items-baseline gap-1 lg:gap-3">
+                <div className="mb-8 lg:mb-12 flex flex-col md:flex-row md:items-baseline gap-1 md:gap-3">
                   <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900 capitalize">
                     {selectedDate ? (
                       <span className="flex items-center gap-3">
@@ -669,17 +710,40 @@ export default function App() {
                     addTask(e);
                     if (window.innerWidth < 1024) setIsMobileAddOpen(false);
                   }} className="mb-10 group">
-                    <div className="relative">
+                    <div className="relative group/input">
                       <Input 
                         ref={inputRef}
                         placeholder="Wat wil je doen?" 
                         autoFocus={isMobileAddOpen}
-                        className="pl-6 pr-24 h-14 bg-white shadow-sm border border-slate-200 focus-visible:border-primary focus-visible:ring-0 transition-all rounded-2xl text-base font-medium placeholder:text-slate-300"
+                        className="pl-6 pr-44 h-14 bg-white shadow-sm border border-slate-200 focus-visible:border-primary focus-visible:ring-0 transition-all rounded-2xl text-base font-medium placeholder:text-slate-300"
                         value={newTaskInput}
                         onChange={(e) => setNewTaskInput(e.target.value)}
                         disabled={isAddingTask}
                       />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger className="h-9 px-2 text-[10px] font-bold text-slate-400 hover:text-primary uppercase tracking-wider bg-slate-100/50 rounded-xl inline-flex items-center border border-transparent transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50">
+                            <Tag className="w-3 h-3 mr-1.5" />
+                            <span className="max-w-[70px] truncate">
+                              {newTaskProject}
+                            </span>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 overflow-hidden">
+                            <DropdownMenuItem onClick={() => setNewTaskProject('Algemeen')}>
+                              Algemeen
+                            </DropdownMenuItem>
+                            {sortedProjects.map(project => (
+                              <DropdownMenuItem key={project.name} onClick={() => setNewTaskProject(project.name)} className="flex items-center gap-2">
+                                <div 
+                                  className="w-2.5 h-2.5 rounded-full shrink-0" 
+                                  style={{ backgroundColor: project.color }} 
+                                />
+                                {project.name}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
                          <Button 
                            type="submit" 
                            size="sm" 
@@ -717,6 +781,7 @@ export default function App() {
                                 onDelete={deleteTask}
                                 onAddSubtask={addSubtask}
                                 onClick={() => setSelectedTask(task)}
+                                projects={sortedProjects}
                               />
                             ))}
                           </div>
@@ -765,6 +830,8 @@ export default function App() {
           onClose={() => setSelectedTask(null)}
           onUpdate={updateTask}
           onDelete={deleteTask}
+          projects={sortedProjects}
+          addProject={addProject}
         />
       )}
     </div>

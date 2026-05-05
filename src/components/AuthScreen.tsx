@@ -40,148 +40,180 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 font-sans relative overflow-hidden text-slate-200">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-3xl" />
+    <div className="min-h-screen bg-[#020617] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full" />
+      </div>
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-[420px] w-full z-10"
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="relative w-full max-w-5xl bg-slate-900/50 backdrop-blur-3xl rounded-[32px] sm:rounded-[40px] border border-white/5 shadow-2xl flex flex-col md:flex-row overflow-hidden min-h-[600px] z-10"
       >
-        <div className="text-center mb-8">
-          <motion.div 
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/20 mx-auto mb-4 rotate-[5deg]"
-          >
-            <ListTodo className="w-6 h-6" />
-          </motion.div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Welkom bij NiftyTasks</h1>
-          <p className="text-slate-400 text-sm mt-1">Organiseer je dag met stijl en eenvoud.</p>
-        </div>
-
-        <div className="bg-slate-900 rounded-[2.5rem] shadow-2xl shadow-black/50 p-8 lg:p-10 border border-white/5 relative overflow-hidden">
-          <div className="flex gap-1 p-1 bg-slate-800/50 rounded-2xl mb-8 border border-white/5">
-            <button 
-              onClick={() => setIsLogin(true)}
-              className={cn(
-                "flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300",
-                isLogin ? "bg-slate-800 text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
-              )}
+        {/* Left Column: Brand Info */}
+        <div className="flex-1 p-8 sm:p-12 lg:p-16 flex flex-col justify-between bg-black/20 border-b md:border-b-0 md:border-r border-white/5 relative group">
+          <div className="relative z-10">
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center text-white mb-8 shadow-xl shadow-primary/20 rotate-[5deg]"
             >
-              Inloggen
-            </button>
-            <button 
-              onClick={() => setIsLogin(false)}
-              className={cn(
-                "flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300",
-                !isLogin ? "bg-slate-800 text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
-              )}
+              <ListTodo className="w-8 h-8" />
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
             >
-              Registreren
-            </button>
+              <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white mb-4">
+                NiftyTasks
+              </h1>
+              <p className="text-slate-400 text-lg max-w-sm leading-relaxed">
+                Organiseer je dag met stijl en eenvoud. De slimme manier om je doelen te bereiken.
+              </p>
+            </motion.div>
           </div>
 
-          <AnimatePresence mode="wait">
-            <motion.form 
-              key={isLogin ? 'login' : 'signup'}
-              initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: isLogin ? 20 : -20 }}
-              transition={{ duration: 0.2 }}
-              onSubmit={handleSubmit}
-              className="space-y-5"
-            >
-              {!isLogin && (
-                <div className="space-y-2">
-                  <label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1 block">Volledige Naam</label>
-                  <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-primary transition-colors" />
+          <div className="mt-12 md:mt-0 relative z-10">
+            <div className="flex items-center gap-4 text-slate-500">
+              <div className="flex -space-x-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center overflow-hidden">
+                    <img 
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 14}`} 
+                      alt="User avatar" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+              <span className="text-sm font-medium">Vertrouwd door hardwerkende professionals</span>
+            </div>
+          </div>
+
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+        </div>
+
+        {/* Right Column: Auth Forms */}
+        <div className="flex-1 p-8 sm:p-12 lg:p-16 flex flex-col justify-center">
+          <div className="w-full max-w-sm mx-auto">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">
+                {isLogin ? 'Welkom terug' : 'Maak een account'}
+              </h2>
+              <p className="text-slate-400 text-sm">
+                {isLogin ? 'Log in om verder te gaan naar je taken.' : 'Begin vandaag nog met slimmer organiseren.'}
+              </p>
+            </div>
+
+            <AnimatePresence mode="wait">
+              <motion.form 
+                key={isLogin ? 'login' : 'signup'}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                onSubmit={handleSubmit}
+                className="space-y-5"
+              >
+                {!isLogin && (
+                  <div className="space-y-1.5 focus-within:text-primary transition-colors">
+                    <label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">
+                      Volledige Naam
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                      <Input 
+                        type="text" 
+                        placeholder="Thomas de Vries" 
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        className="pl-11 h-12 bg-white/5 border-white/10 focus:bg-white/10 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-white placeholder:text-slate-600"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-1.5 focus-within:text-primary transition-colors">
+                  <label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <Input 
-                      id="name"
-                      type="text" 
-                      placeholder="Thomas de Vries" 
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      type="email" 
+                      placeholder="naam@voorbeeld.nl" 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="pl-11 h-12 bg-slate-800/40 border-transparent focus:bg-slate-800 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-white placeholder:text-slate-600"
+                      className="pl-11 h-12 bg-white/5 border-white/10 focus:bg-white/10 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-white placeholder:text-slate-600"
                     />
                   </div>
                 </div>
-              )}
 
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1 block">E-mailadres</label>
-                <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-primary transition-colors" />
-                  <Input 
-                    id="email"
-                    type="email" 
-                    placeholder="naam@voorraad.nl" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="pl-11 h-12 bg-slate-800/40 border-transparent focus:bg-slate-800 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-white placeholder:text-slate-600"
-                  />
+                <div className="space-y-1.5 focus-within:text-primary transition-colors">
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-70">
+                      Wachtwoord
+                    </label>
+                    {isLogin && (
+                      <button type="button" className="text-[10px] font-bold text-primary hover:underline">Vergeten?</button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <Input 
+                      type="password" 
+                      placeholder="••••••••" 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="pl-11 h-12 bg-white/5 border-white/10 focus:bg-white/10 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-white placeholder:text-slate-600"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between items-center px-1">
-                  <label htmlFor="pass" className="text-xs font-bold uppercase tracking-wider text-slate-500 block">Wachtwoord</label>
-                  {isLogin && (
-                    <button type="button" className="text-[11px] font-bold text-primary hover:underline">Vergeten?</button>
+                <Button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="w-full h-12 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group transition-all"
+                >
+                  {isLoading ? (
+                    <motion.div 
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                    />
+                  ) : (
+                    <>
+                      {isLogin ? 'Log in' : 'Account aanmaken'}
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </>
                   )}
-                </div>
-                <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-primary transition-colors" />
-                  <Input 
-                    id="pass"
-                    type="password" 
-                    placeholder="••••••••" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="pl-11 h-12 bg-slate-800/40 border-transparent focus:bg-slate-800 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-white placeholder:text-slate-600"
-                  />
-                </div>
-              </div>
+                </Button>
+              </motion.form>
+            </AnimatePresence>
 
-              <Button 
-                type="submit" 
-                disabled={isLoading}
-                className="w-full h-12 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group transition-all"
+            <div className="mt-8 text-center">
+              <button
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                }}
+                className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
               >
-                {isLoading ? (
-                  <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                    className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                  />
-                ) : (
-                  <>
-                    {isLogin ? 'Inloggen' : 'Account aanmaken'}
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </Button>
-            </motion.form>
-          </AnimatePresence>
-        </div>
-
-        <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2">
-          {[
-            { icon: <CheckCircle2 className="w-3 h-3" />, label: 'Privacy First' },
-            { icon: <CheckCircle2 className="w-3 h-3" />, label: 'Lokale Opslag' },
-            { icon: <CheckCircle2 className="w-3 h-3" />, label: 'Geen Tracker' },
-          ].map((item, i) => (
-            <div key={i} className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              <span className="text-primary">{item.icon}</span>
-              {item.label}
+                {isLogin ? 'Nog geen account? ' : 'Al een account? '}
+                <span className="text-primary font-bold">
+                  {isLogin ? 'Meld je aan' : 'Log in'}
+                </span>
+              </button>
             </div>
-          ))}
+          </div>
         </div>
       </motion.div>
     </div>
