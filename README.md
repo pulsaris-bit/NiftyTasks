@@ -48,6 +48,13 @@ Volg deze stappen om het project lokaal te draaien:
    npm run build
    ```
 
+## Beperkingen
+
+NiftyTasks heeft momenteel nog enkele beperkingen:
+
+- **Wachtwoordherstel**: Wachtwoord herstellen via de 'Vergeten'  knop werkt niet.
+- **Wachtwoord wijzigen**: Gebruikers kunnen momenteel hun wachtwoord nog niet wijzigen. 
+  
 ## 📄 Licentie
 
 Dit project is ontwikkeld als een moderne taakbeheeroplossing. Neem contact op met de eigenaar voor gebruiksrechten.
