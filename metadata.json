@@ -1,0 +1,6 @@
+{
+  "name": "NiftyTasks",
+  "description": "NiftyTasks: Een minimalistische full-stack takenlijst app met Express, SQLite en Docker ondersteuning. Bevat AI-ondersteuning voor het opsplitsen van complexe taken.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
