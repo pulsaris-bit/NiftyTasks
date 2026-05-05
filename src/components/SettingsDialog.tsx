@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Settings, Plus, FolderPlus, Palette, Bell, Shield, X, Edit2, Trash2, CheckCircle2, LogOut } from 'lucide-react';
+import { Settings, Plus, FolderPlus, Palette, Bell, Info, ListTodo, Shield, X, Edit2, Trash2, CheckCircle2, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Project } from '../types';
 
@@ -52,7 +52,7 @@ export function SettingsDialog({
 }: SettingsDialogProps) {
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectColor, setNewProjectColor] = useState(PRESET_COLORS[0]);
-  const [activeTab, setActiveTab] = useState<'general' | 'projects' | 'notifications'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'projects' | 'notifications' | 'version'>('general');
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editValue, setEditValue] = useState('');
   const [editColor, setEditColor] = useState('');
@@ -125,6 +125,16 @@ export function SettingsDialog({
                 <Bell className="w-3.5 h-3.5" />
                 Meldingen
               </button>
+              <button 
+                onClick={() => setActiveTab('version')}
+                className={cn(
+                  "w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all",
+                  activeTab === 'version' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-white hover:bg-white/5"
+                )}
+              >
+                <Info className="w-3.5 h-3.5" />
+                Versie
+              </button>
 
               <div className="hidden sm:block w-px sm:w-full h-px sm:h-px bg-white/5 my-2" />
               
@@ -144,12 +154,14 @@ export function SettingsDialog({
               <DialogTitle className="text-lg sm:text-2xl font-bold tracking-tight text-white mb-1 sm:mb-2">
                 {activeTab === 'general' ? 'Algemene Instellingen' : 
                  activeTab === 'projects' ? 'Project Management' :
-                 'Meldingen & Desktop'}
+                 activeTab === 'notifications' ? 'Meldingen & Desktop' :
+                 'Informatie & Versie'}
               </DialogTitle>
               <p className="text-[10px] sm:text-xs text-slate-400">
                 {activeTab === 'general' ? 'Pas de interface van NiftyTasks aan naar jouw wensen.' : 
                  activeTab === 'projects' ? 'Beheer je projecten en categorieën hier.' :
-                 'Blijf op de hoogte van je taken met desktop meldingen.'}
+                 activeTab === 'notifications' ? 'Blijf op de hoogte van je taken met desktop meldingen.' :
+                 'Details over de huidige versie van de applicatie.'}
               </p>
             </DialogHeader>
 
@@ -356,6 +368,27 @@ export function SettingsDialog({
                         </Button>
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'version' && (
+                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6 p-8">
+                  <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center text-primary rotate-[5deg] border border-primary/20 shadow-xl shadow-primary/5">
+                    <ListTodo className="w-10 h-10" />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-xl font-bold text-white tracking-tight">NiftyTasks Desktop</h4>
+                    <p className="text-sm font-medium text-slate-500 font-mono">Versie 0.9.00</p>
+                  </div>
+                  <div className="max-w-xs p-4 bg-white/5 rounded-2xl border border-white/5 space-y-3">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Status: Release Candidate
+                    </div>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      NiftyTasks is momenteel in actieve ontwikkeling. Bedankt voor het gebruiken van onze applicatie!
+                    </p>
                   </div>
                 </div>
               )}
