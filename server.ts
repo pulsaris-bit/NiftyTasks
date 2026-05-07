@@ -6,7 +6,8 @@ import { fileURLToPath } from 'url';
 import cors from 'cors';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const db = sqlite3('niftytasks.db');
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'niftytasks.db');
+const db = sqlite3(dbPath);
 
 // Initialize Database structure
 db.exec(`
@@ -213,6 +214,19 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running at http://0.0.0.0:${PORT}`);
+  });
+
+  // Graceful shutdown
+  process.on('SIGINT', () => {
+    console.log('Shutting down...');
+    db.close();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', () => {
+    console.log('Shutting down...');
+    db.close();
+    process.exit(0);
   });
 }
 

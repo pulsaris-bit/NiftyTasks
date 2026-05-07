@@ -8,3 +8,4 @@ coverage/
 !.env.example
 niftytasks.db
 niftytasks.db-journal
+data/

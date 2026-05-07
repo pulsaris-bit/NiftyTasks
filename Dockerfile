@@ -17,6 +17,9 @@ FROM node:20-slim
 
 WORKDIR /app
 
+# Create data directory for SQLite persistence
+RUN mkdir -p /app/data
+
 # Re-install prod dependencies to ensure native modules like better-sqlite3 match the OS
 COPY package*.json ./
 RUN npm install --omit=dev

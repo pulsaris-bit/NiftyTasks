@@ -1,0 +1,14 @@
+services:
+  niftytasks:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - niftytasks_data:/app/data
+    environment:
+      - NODE_ENV=production
+      - DATABASE_PATH=/app/data/niftytasks.db
+    restart: always
+
+volumes:
+  niftytasks_data:
