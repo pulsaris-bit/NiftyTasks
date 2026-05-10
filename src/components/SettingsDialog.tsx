@@ -89,10 +89,10 @@ export function SettingsDialog({
           )
         }
       />
-      <DialogContent showCloseButton={false} className="w-[95vw] sm:w-[96vw] sm:max-w-[1000px] p-0 border-none bg-[#0f172a] text-white overflow-hidden rounded-[24px] sm:rounded-3xl shadow-2xl ring-1 ring-white/10 max-h-[90vh] sm:max-h-[85vh]">
+      <DialogContent showCloseButton={false} className="w-[95vw] sm:w-[96vw] sm:max-w-[1000px] p-0 border-none bg-[hsl(30,10%,7%)] text-white overflow-hidden rounded-[24px] sm:rounded-3xl shadow-2xl ring-1 ring-white/10 max-h-[90vh] sm:max-h-[85vh]">
         <div className="flex flex-col sm:flex-row h-full sm:h-[700px] overflow-hidden">
           {/* Sidebar Tabs */}
-          <div className="w-full sm:w-64 border-b sm:border-b-0 sm:border-r border-white/5 bg-black/20 p-4 sm:p-8 flex flex-col shrink-0">
+          <div className="w-full sm:w-64 border-b sm:border-b-0 sm:border-r border-white/5 bg-black/40 p-4 sm:p-8 flex flex-col shrink-0">
             <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2 mb-4 sm:mb-8 shrink-0">Instellingen</h2>
             <div className="flex flex-col gap-1 sm:gap-2 flex-1 items-stretch">
               <button 

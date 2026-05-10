@@ -51,7 +51,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="relative w-full max-w-5xl bg-slate-900/50 backdrop-blur-3xl rounded-[32px] sm:rounded-[40px] border border-white/5 shadow-2xl flex flex-col md:flex-row overflow-hidden min-h-[600px] z-10"
+        className="relative w-full max-w-5xl bg-[#0f172a]/90 backdrop-blur-3xl rounded-[32px] sm:rounded-[40px] border border-white/10 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8),0_0_40px_rgba(59,130,246,0.1)] flex flex-col md:flex-row overflow-hidden min-h-[600px] z-10"
       >
         {/* Left Column: Brand Info */}
         <div className="flex-1 p-8 sm:p-12 lg:p-16 flex flex-col justify-between bg-black/20 border-b md:border-b-0 md:border-r border-white/5 relative group">
@@ -134,7 +134,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
-                        className="pl-11 h-12 bg-white/5 border-white/10 focus:bg-white/10 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-white placeholder:text-slate-600"
+                        className="pl-11 h-12 bg-white/10 border-white/10 focus:bg-white/20 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-white placeholder:text-slate-500"
                       />
                     </div>
                   </div>
@@ -152,7 +152,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="pl-11 h-12 bg-white/5 border-white/10 focus:bg-white/10 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-white placeholder:text-slate-600"
+                      className="pl-11 h-12 bg-white/10 border-white/10 focus:bg-white/20 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-white placeholder:text-slate-500"
                     />
                   </div>
                 </div>
@@ -174,7 +174,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="pl-11 h-12 bg-white/5 border-white/10 focus:bg-white/10 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-white placeholder:text-slate-600"
+                      className="pl-11 h-12 bg-white/10 border-white/10 focus:bg-white/20 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-white placeholder:text-slate-500"
                     />
                   </div>
                 </div>
