@@ -379,7 +379,7 @@ export function SettingsDialog({
                   </div>
                   <div className="space-y-2">
                     <h4 className="text-xl font-bold text-white tracking-tight">NiftyTasks Desktop</h4>
-                    <p className="text-sm font-medium text-slate-500 font-mono">Versie 0.9.00</p>
+                    <p className="text-sm font-medium text-slate-500 font-mono">Versie 0.9.5</p>
                   </div>
                   <div className="max-w-xs p-4 bg-white/5 rounded-2xl border border-white/5 space-y-3">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
